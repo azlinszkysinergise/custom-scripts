@@ -2,7 +2,7 @@
 layout: default
 title: Contribute
 nav_order: 99
-has_children: false
+has_children: true
 ---
 
 # Contribute to Custom Scripts
@@ -12,6 +12,9 @@ Have a look at the [template](/contribute/example) for an example of how a scrip
 There is also an [example](/contribute/example-multiple-scripts) for a page with can display multiple scripts.
 
 You can also have a look at other scripts to see how they are structured.
+
+If you are using an AI coding assistant (or just want a concise checklist), see
+[Contributing with AI assistants](/contribute/agents/).
 
 For instructions on how custom scripts are structured have a look at this [tutorial](https://www.sentinel-hub.com/explore/education/custom-scripts-tutorial/), or at the [official documenation](https://docs.sentinel-hub.com/api/latest/evalscript/).
 
