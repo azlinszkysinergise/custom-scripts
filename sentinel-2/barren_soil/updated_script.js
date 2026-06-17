@@ -1,6 +1,6 @@
 //VERSION=3
 // Barren soil (Bare Soil Index) - Evalscript V3 multi-output update of the original
-// single-output script by Monja Sebela. This "Updated version":
+// single-output script by Monja Sebela. This "Updated version" created by András Zlinszky (Sinergise) and AI:
 //   * adds `index` and `eobrowserStats` outputs (the BSI scaled to 0..1) so EO Browser
 //     shows the value at a pixel and builds Statistical Info / temporal charts;
 //   * masks clouds, water (and other non-soil classes) via the Scene Classification
