@@ -19,7 +19,13 @@ function setup() {
             { id: "dataMask", bands: 1 }
         ]
     };
+
 }
+
+// USER-CONFIGURABLE PARAMETERS
+// Adjust these values to rescale the color palette visualization:
+var minColorValue = 0.058;      // Values below this appear as white (underflow)
+var maxColorValue = 17.467;     // Values above this appear as black (overflow)
 
 const cloud_palette = {
     0: [0, 0, 0],             // No Data (Missing data) - black
@@ -35,19 +41,16 @@ const cloud_palette = {
 };
 
 function evaluatePixel(sample) {    let index = sample.B11 / sample.B08;
-    let min = 0.058;
-    let max = 17.467;
-
-    // colorBlend will return a color when the index is between min and max and white when it is less than min.
-    // To see black when it is more than max, uncomment the last line of colorBlend.
-    // The min/max values were computed automatically and may be poorly specified, feel free to change them to tweak the displayed range.
+    // colorBlend will return a color when the index is between minColorValue and maxColorValue and white when it is less than minColorValue.
+    // To see black when it is more than maxColorValue, uncomment the last line of colorBlend.
+    // The minColorValue/maxColorValue values were computed automatically and may be poorly specified, feel free to change them to tweak the displayed range.
 
     let underflow_color = [1, 1, 1];
     let low_color = [208/255, 88/255, 126/255];
     let high_color = [241/255, 234/255, 200/255];
     let overflow_color = [0, 0, 0];
 
-    let imgVals = colorBlend(index, [min, min, max],
+    let imgVals = colorBlend(index, [minColorValue, minColorValue, maxColorValue],
     [
     	underflow_color,
     	low_color,
@@ -65,3 +68,4 @@ function evaluatePixel(sample) {    let index = sample.B11 / sample.B08;
         dataMask: [sample.dataMask]
     };
 }
+

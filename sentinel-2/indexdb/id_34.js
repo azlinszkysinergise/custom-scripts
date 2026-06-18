@@ -19,7 +19,13 @@ function setup() {
             { id: "dataMask", bands: 1 }
         ]
     };
+
 }
+
+// USER-CONFIGURABLE PARAMETERS
+// Adjust these values to rescale the color palette visualization:
+var minColorValue = -0.003;      // Values below this appear as white (underflow)
+var maxColorValue = 0.003;     // Values above this appear as black (overflow)
 
 const cloud_palette = {
     0: [0, 0, 0],             // No Data (Missing data) - black
@@ -35,13 +41,11 @@ const cloud_palette = {
 };
 
 function evaluatePixel(sample) {    let index = Math.atan((2.0 * sample.B04 - sample.B03 - sample.B02) / 30.5 * (sample.B03 - sample.B02));
-    let min = -0.003;
-    let max = 0.003;
     let zero = 0.0;
 
-    // colorBlend will return a color when the index is between min and max and white when it is less than min.
-    // To see black when it is more than max, uncomment the last line of colorBlend.
-    // The min/max values were computed automatically and may be poorly specified, feel free to change them to tweak the displayed range.
+    // colorBlend will return a color when the index is between minColorValue and maxColorValue and white when it is less than minColorValue.
+    // To see black when it is more than maxColorValue, uncomment the last line of colorBlend.
+    // The minColorValue/maxColorValue values were computed automatically and may be poorly specified, feel free to change them to tweak the displayed range.
     // This index crosses zero, so a diverging color map is used. To tweak the value of the break in the color map, change the variable 'zero'.
 
     let underflow_color = [1, 1, 1];
@@ -50,7 +54,7 @@ function evaluatePixel(sample) {    let index = Math.atan((2.0 * sample.B04 - sa
     let zero_color = [0, 147/255, 146/255];
     let overflow_color = [0, 0, 0];
 
-    let imgVals = colorBlend(index, [min, min, zero, max],
+    let imgVals = colorBlend(index, [minColorValue, minColorValue, zero, maxColorValue],
     [
     	underflow_color,
     	low_color,
@@ -69,3 +73,4 @@ function evaluatePixel(sample) {    let index = Math.atan((2.0 * sample.B04 - sa
         dataMask: [sample.dataMask]
     };
 }
+
