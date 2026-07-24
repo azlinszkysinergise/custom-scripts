@@ -5,6 +5,11 @@ grand_parent: Landsat
 layout: script
 permalink: /landsat-8/land_surface_temperature_mapping/
 nav_exclude: true
+scripts:
+- - Original
+  - script.js
+- - Updated version
+  - updated_script.js
 ---
 
 
@@ -23,6 +28,16 @@ As described, the output of the script is simple. If multi-temporal input could 
 This script can be used globally as long as low % cloud images are available.
 
 As mentioned, all examples are analyzed with preselected values of surface roughness, NDVI (vegetation, soil) and emissivity. In addition, examples were analyzed only with band 10.
+
+## Updated version (urban thermal)
+
+The **Updated version** tab (`updated_script.js`) adapts the script for urban / built-up areas and corrects the temperature retrieval:
+
+- **SWIR-based classification** (Landsat band **B06**) assigns emissivity to **water** (low NDVI + low SWIR) and **metal roofs** (low NDVI + high SWIR/visible), in addition to the NDVI-based soil and vegetation classes. `metalE = 0.55` reflects weathered/painted real-world metal roofs; a much lower value exaggerates roof temperatures in 30 m mixed pixels.
+- **Kelvin correction fix:** the emissivity correction is applied to brightness temperature in **Kelvin** and only then converted to °C (the original applied it on Celsius brightness temperature).
+- A **multi-stop colour palette** (blue → green → yellow → red → violet → white) scaled between `minC` and `maxC` (defaults 10–60 °C); the standard-deviation option (`option = 2`) is shown in grayscale.
+
+The **Original** tab is unchanged. Updated version by András Zlinszky (Sinergise).
 
 ## Author of the script
 
