@@ -13,9 +13,11 @@ This page helps you use an AI coding assistant — or work by hand — to add a 
 repository quickly and correctly. It complements the [Contribute](/contribute) page by spelling out the
 conventions and pitfalls that are easy to miss.
 
-It is **tool-neutral**: the file is named `AGENTS.md` so assistants that look for repository instructions
-can pick it up, but nothing here is specific to any one assistant (Claude, Cursor, Copilot, Codex, and
-others can all use it), and every checklist is equally useful for a manual contribution.
+It is **tool-neutral**. The page lives at `AGENTS.md` in the repository root, which is where coding
+assistants look for repository instructions, so most of them pick it up automatically. Claude Code is
+an exception: it reads `CLAUDE.md`, so the root `CLAUDE.md` in this repository simply imports this
+file with `@AGENTS.md` ([why](https://code.claude.com/docs/en/memory)). Nothing below is specific to
+any one assistant, and every checklist is equally useful for a contribution made by hand.
 
 <details markdown="block">
   <summary>Table of contents</summary>
@@ -27,13 +29,21 @@ others can all use it), and every checklist is equally useful for a manual contr
 
 A folder `<collection>/<slug>/` containing:
 
-- `script.js` — the evalscript, whose **first line is `//VERSION=3`**.
-- `README.md` — Jekyll front matter + a short description (see below).
-- `fig/fig1.png` — a representative image (optional but expected for real scripts).
+- `script.js` — the evalscript. Version 3 is a **structure**, not just a marker: the file starts with
+  `//VERSION=3` **and** defines a `setup()` returning `{ input, output }` **and** an `evaluatePixel()`.
+- `README.md` **or** `index.md` — the page: Jekyll front matter + a short description (see below).
+  Both names work; the `permalink` in the front matter decides the URL, not the filename. Most scripts
+  use `README.md`; the templates below and the `planet` / `dem` collections use `index.md`.
+- `fig/fig1.<ext>` — a representative image (optional but expected for real scripts). Keep whatever
+  format you already have; `.png`, `.jpg`, `.jpeg` and `.gif` are all in use. Don't convert an image
+  just to make the filename read `fig1.png`.
 
 …plus **one link line** added to the collection's index page, `<collection>/<collection>.md`.
 
-Copying the [example folder](/contribute/example) is the easiest starting point.
+Copying the [example folder](/contribute/example) is the easiest starting point. If your page should
+offer several evalscript variants (for example a visualization plus a raw-values version), copy
+[example-multiple-scripts](/contribute/example-multiple-scripts) instead and see the `scripts:` field
+in §2.
 
 ## 1. Gather the inputs
 
@@ -42,20 +52,24 @@ Copying the [example folder](/contribute/example) is the easiest starting point.
   `B10` ⇒ `landsat-8` (Landsat 8/9 OLI/TIRS).
 - **Title** (human-readable) and **slug** (`snake_case`, used as the folder name).
 - **One-line description** for the index link.
-- **The evalscript** (must start with `//VERSION=3`).
+- **The evalscript** (a V3 script: `//VERSION=3`, `setup()`, `evaluatePixel()`). Note whether it needs
+  a single page or several script variants on one page.
 - **At least one example**: `lat`, `lng`, `zoom`, `datasetId`, `fromTime`/`toTime` (an ISO day window
   over a real, mostly cloud-free acquisition), and `platform` (`EOB` and/or `CDSE`).
-- **A representative image** at `fig/fig1.png`.
+- **A representative image** at `fig/fig1.<ext>`, in its original format.
 
 ## 2. Scaffold the files
 
 ### `script.js`
 
-The evalscript verbatim, first line `//VERSION=3`. Note evalscripts are **per-pixel**: they cannot
-access neighbouring pixels, so they cannot measure neighbourhoods or cluster sizes — don't describe a
-script as doing spatial filtering it can't do.
+The evalscript verbatim. It must be a genuine V3 script — first line `//VERSION=3`, a `setup()`
+returning `{ input, output }`, and an `evaluatePixel()`. Prepending the `//VERSION=3` line to a V1 or
+V2 script does not convert it; the structure has to match too.
 
-### `README.md`
+Note evalscripts are **per-pixel**: they cannot access neighbouring pixels, so they cannot measure
+neighbourhoods or cluster sizes — don't describe a script as doing spatial filtering it can't do.
+
+### `README.md` (or `index.md`)
 
 Front matter (keep the quoting style):
 
@@ -81,6 +95,22 @@ examples:
 ---
 ```
 
+**Several scripts on one page.** If the folder holds more than one evalscript, list them with a
+`scripts:` field (added before `examples:`), and the page renders one tab per variant:
+
+```yaml
+scripts:
+  - [Visualization, script.js]
+  - [EO Browser, eob.js]
+  - [Raw Values, raw.js]
+```
+
+Each entry is `[<label>, <filename>]`, the first tab is the one shown by default, and every file must
+sit in the same folder as the page. Without a `scripts:` field the layout falls back to including a
+file named exactly `script.js`. The "Evaluate and Visualize" links are built separately from
+`evalscripturl` in `examples`, so point that at whichever variant the browser should open. See
+[example-multiple-scripts](/contribute/example-multiple-scripts) for a working page.
+
 Body, in this order:
 
 ```markdown
@@ -91,7 +121,7 @@ Body, in this order:
 ## Description of representative images
 
 <One-line caption.>
-![<alt text>](fig/fig1.png)
+![<alt text>](fig/fig1.<ext>)
 
 ## References
 
@@ -133,14 +163,20 @@ Common tokens (always verify against the live `_layouts/script.html`, which is t
 
 ## 4. Validation checklist
 
-- `script.js` first line is `//VERSION=3`; it is valid JavaScript; the main file is named `script.js`.
-- Front matter has `layout: script` and `nav_exclude: true`.
+- Every evalscript in the folder is a real V3 script — first line `//VERSION=3`, a `setup()` returning
+  `{ input, output }`, and an `evaluatePixel()` — and is valid JavaScript. Adding the `//VERSION=3`
+  line to a V1/V2 script does not satisfy this.
+- The main evalscript is named `script.js`, unless the page lists its files explicitly in `scripts:`.
+- The page file (`README.md` or `index.md`) has `layout: script` and `nav_exclude: true` in its front
+  matter.
 - `permalink` is `/<collection>/<slug>/` **and** `evalscripturl` ends with
   `/<collection>/<slug>/script.js` — both match the real folder path.
 - `slug` is `snake_case`; the folder is under the correct collection (band-driven).
 - `examples` has at least one complete entry over a real, mostly cloud-free acquisition.
 - If any example uses `platform: CDSE`, its `datasetId` token exists in `cdse_lookup` (add it if not).
-- `fig/fig1.png` exists, is non-empty, and is referenced (watch for an accidental `fig1.png.png`).
+- If the page lists several evalscripts, each filename in `scripts:` exists in the folder.
+- `fig/fig1.<ext>` exists in its original format, is non-empty, and is referenced by the page with a
+  matching extension (watch for an accidental doubled extension such as `fig1.png.png`).
 - The index link line is added under an existing heading.
 - Contributions inherit the repository's **CC BY-SA 4.0** license (credit authors in the index line).
 
