@@ -17,6 +17,7 @@ exclude:
   - vendor/gems/
   - vendor/ruby/
   - README.md
+  - CLAUDE.md
 
 logo: "/assets/images/sentinel_hub_logo_with_custom_scripts.png"
 favicon_ico: "/assets/images/public_favicon.ico"
