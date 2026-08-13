@@ -13,19 +13,11 @@ This page helps you use an AI coding assistant — or work by hand — to add a 
 repository quickly and correctly. It complements the [Contribute](/contribute) page by spelling out the
 conventions and pitfalls that are easy to miss.
 
-It is **tool-neutral**. `AGENTS.md` is an [open, cross-vendor format](https://agents.md/) for
-instructing coding agents, and this file sits in the repository root where those tools look for it, so
-most of them — Codex, Cursor, Copilot's coding agent, Windsurf, Devin, Zed, Junie and others — pick it
-up with no setup. Two assistants read a different filename, and this repository ships a two-line shim
-for each so they work out of the box too:
-
-| Assistant | Reads | Shim in this repository |
-|---|---|---|
-| Claude Code | `CLAUDE.md` | root `CLAUDE.md` imports this file with `@AGENTS.md` |
-| Gemini CLI | `GEMINI.md` | `.gemini/settings.json` sets `context.fileName` to `AGENTS.md` |
-
-Aider users should add `read: AGENTS.md` to their own `.aider.conf.yml`. Nothing below is specific to
-any one assistant, and every checklist is equally useful for a contribution made by hand.
+It is **tool-neutral**. `AGENTS.md` is an [open, cross-vendor format](https://agents.md/) that most
+coding assistants read automatically from the repository root. Two need pointing at it, and this
+repository ships a shim for each: `CLAUDE.md` imports this file with `@AGENTS.md` for Claude Code, and
+`.gemini/settings.json` sets `context.fileName` for Gemini CLI. Aider users add `read: AGENTS.md` to
+their own `.aider.conf.yml`. Nothing below is assistant-specific — every checklist works by hand too.
 
 <details markdown="block">
   <summary>Table of contents</summary>
@@ -37,8 +29,8 @@ any one assistant, and every checklist is equally useful for a contribution made
 
 A folder `<collection>/<slug>/` containing:
 
-- `script.js` — the evalscript. Version 3 is a **structure**, not just a marker: the file starts with
-  `//VERSION=3` **and** defines a `setup()` returning `{ input, output }` **and** an `evaluatePixel()`.
+- `script.js` — the evalscript. It must be a real V3 script, not just a file starting with
+  `//VERSION=3`; see §2.
 - `README.md` **or** `index.md` — the page: Jekyll front matter + a short description (see below).
   Both names work; the `permalink` in the front matter decides the URL, not the filename. Most scripts
   use `README.md`; the templates below and the `planet` / `dem` collections use `index.md`.
@@ -60,8 +52,7 @@ in §3.
   `B10` ⇒ `landsat-8` (Landsat 8/9 OLI/TIRS).
 - **Title** (human-readable) and **slug** (`snake_case`, used as the folder name).
 - **One-line description** for the index link.
-- **The evalscript** (a V3 script: `//VERSION=3`, `setup()`, `evaluatePixel()`). Note whether it needs
-  a single page or several script variants on one page.
+- **The evalscript**, and whether it needs one page or several script variants on one page.
 - **At least one example**: `lat`, `lng`, `zoom`, `datasetId`, `fromTime`/`toTime` (an ISO day window
   over a real, mostly cloud-free acquisition), and `platform` (`EOB` and/or `CDSE`).
 - **A representative image** at `fig/fig1.<ext>`, in its original format.
@@ -157,12 +148,9 @@ ignored, so `sampleType` decides it.
 
 ### `script.js`
 
-The evalscript verbatim. It must be a genuine V3 script — first line `//VERSION=3`, a `setup()`
-returning `{ input, output }`, and an `evaluatePixel()`. Prepending the `//VERSION=3` line to a V1 or
-V2 script does not convert it; the structure has to match too.
-
-Note evalscripts are **per-pixel**: they cannot access neighbouring pixels, so they cannot measure
-neighbourhoods or cluster sizes — don't describe a script as doing spatial filtering it can't do.
+The evalscript verbatim (§2). One thing worth stating outright: evalscripts are **per-pixel** — they
+cannot access neighbouring pixels, so they cannot measure neighbourhoods or cluster sizes. Don't
+describe a script as doing spatial filtering it can't do.
 
 ### `README.md` (or `index.md`)
 
@@ -245,16 +233,8 @@ mapping line to `cdse_lookup` and **call out that change in your pull request** 
 site file). You can read the real CDSE dataset id straight from a Copernicus Browser URL's
 `&datasetId=` parameter.
 
-Common tokens (always verify against the live `_layouts/script.html`, which is the source of truth):
-
-| collection | parent / grand_parent | EO Browser token | CDSE dataset id |
-|---|---|---|---|
-| `sentinel-2`  | Sentinel-2 / Sentinel | `S2L2A`, `S2L1C` | `S2_L2A_CDAS`, `S2_L1C_CDAS` |
-| `sentinel-1`  | Sentinel-1 / Sentinel | `S1_AWS_IW_VVVH`, `S1_AWS_EW_HHHV` | `S1_CDAS_IW_VVVH`, `S1_CDAS_EW_HHHV` |
-| `sentinel-3`  | Sentinel-3 / Sentinel | `S3SLSTR`, `S3OLCI` | `S3SLSTR_CDAS`, `S3OLCI_CDAS` |
-| `sentinel-5p` | Sentinel-5P / Sentinel | `S5_NO2`, `S5_O3`, … | `S5_NO2_CDAS`, `S5_O3_CDAS`, … |
-| `landsat-8`   | Landsat 8 / Landsat | `AWS_LOTL1`, `AWS_LOTL2` | `CDAS_L8_L9_LOTL1` |
-| `dem`         | DEM | `DEM_MAPZEN` | `DEM_COPERNICUS_30_CDAS` |
+No token list is reproduced here, because it would rot: read the tokens from `cdse_lookup` in that
+file, and take the `parent` / `grand_parent` values from a sibling script in the same collection.
 
 ## 5. Validation checklist
 
@@ -298,9 +278,6 @@ These keep scripts fast and cheap, especially across many or large requests:
   `S2L1C, S2L2A, S1GRD, S3SLSTR, S3OLCI, S5PL2, L8L1C, DEM, MODIS`. These belong in the
   [`data-fusion`](/data-fusion) collection, and the example needs a data-fusion datasource setup rather
   than a single `datasetId`.
-
-Further reading: Sentinel Hub's *Multi-temporal processing*, *Custom scripts: faster, cheaper, better*,
-and *Data fusion: combine satellite datasets* articles.
 
 ## 8. Submitting a pull request
 
