@@ -295,7 +295,7 @@ These keep scripts fast and cheap, especially across many or large requests:
 - Prefer a smaller `sampleType` (`UINT8` / `UINT16`) when full float precision isn't needed; digital
   numbers carry the same information as reflectance for normalized-difference indices.
 - Compute indices/functions **conditionally** (only in the branch that needs them).
-- Use `filterScenes` to drop unneeded scenes from a time range.
+- Use `preProcessScenes` to drop unneeded scenes from a time range before they cost anything.
 - Reuse `viz.process` / `viz.processList` and predefined products where available; delete unused code.
 
 ## 7. Advanced script types
