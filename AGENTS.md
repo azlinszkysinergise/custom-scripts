@@ -13,10 +13,18 @@ This page helps you use an AI coding assistant — or work by hand — to add a 
 repository quickly and correctly. It complements the [Contribute](/contribute) page by spelling out the
 conventions and pitfalls that are easy to miss.
 
-It is **tool-neutral**. The page lives at `AGENTS.md` in the repository root, which is where coding
-assistants look for repository instructions, so most of them pick it up automatically. Claude Code is
-an exception: it reads `CLAUDE.md`, so the root `CLAUDE.md` in this repository simply imports this
-file with `@AGENTS.md` ([why](https://code.claude.com/docs/en/memory)). Nothing below is specific to
+It is **tool-neutral**. `AGENTS.md` is an [open, cross-vendor format](https://agents.md/) for
+instructing coding agents, and this file sits in the repository root where those tools look for it, so
+most of them — Codex, Cursor, Copilot's coding agent, Windsurf, Devin, Zed, Junie and others — pick it
+up with no setup. Two assistants read a different filename, and this repository ships a two-line shim
+for each so they work out of the box too:
+
+| Assistant | Reads | Shim in this repository |
+|---|---|---|
+| Claude Code | `CLAUDE.md` | root `CLAUDE.md` imports this file with `@AGENTS.md` |
+| Gemini CLI | `GEMINI.md` | `.gemini/settings.json` sets `context.fileName` to `AGENTS.md` |
+
+Aider users should add `read: AGENTS.md` to their own `.aider.conf.yml`. Nothing below is specific to
 any one assistant, and every checklist is equally useful for a contribution made by hand.
 
 <details markdown="block">
