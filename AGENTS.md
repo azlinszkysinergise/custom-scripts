@@ -19,6 +19,12 @@ repository ships a shim for each: `CLAUDE.md` imports this file with `@AGENTS.md
 `.gemini/settings.json` sets `context.fileName` for Gemini CLI. Aider users add `read: AGENTS.md` to
 their own `.aider.conf.yml`. Nothing below is assistant-specific — every checklist works by hand too.
 
+**Writing evalscripts outside this repository?** This file is useful on its own. Copy it into the root
+of your own project as `AGENTS.md` and your assistant will pick it up there the same way (for Claude
+Code, add a `CLAUDE.md` containing `@AGENTS.md` alongside it, exactly as above). §2 and §6 are the
+parts that apply to any evalscript; the rest describes how contributions to *this* repository are laid
+out.
+
 <details markdown="block">
   <summary>Table of contents</summary>
 - TOC
