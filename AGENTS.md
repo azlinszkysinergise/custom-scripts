@@ -51,7 +51,7 @@ A folder `<collection>/<slug>/` containing:
 Copying the [example folder](/contribute/example) is the easiest starting point. If your page should
 offer several evalscript variants (for example a visualization plus a raw-values version), copy
 [example-multiple-scripts](/contribute/example-multiple-scripts) instead and see the `scripts:` field
-in §2.
+in §3.
 
 ## 1. Gather the inputs
 
@@ -66,7 +66,93 @@ in §2.
   over a real, mostly cloud-free acquisition), and `platform` (`EOB` and/or `CDSE`).
 - **A representative image** at `fig/fig1.<ext>`, in its original format.
 
-## 2. Scaffold the files
+## 2. Anatomy of an evalscript
+
+Every script has the same shape. Start from this skeleton:
+
+```javascript
+//VERSION=3
+
+function setup() {
+  return {
+    input: ["B04", "B08", "dataMask"],        // only the bands you actually use
+    output: { bands: 4, sampleType: "AUTO" }, // R, G, B, alpha
+    // mosaicking: "ORBIT",                   // multi-temporal scripts only
+  };
+}
+
+function evaluatePixel(sample) {
+  const ndvi = (sample.B08 - sample.B04) / (sample.B08 + sample.B04);
+  return [ndvi, ndvi, ndvi, sample.dataMask];
+}
+```
+
+- **`setup()`** declares which bands you request and the shape of the result.
+- **`evaluatePixel()`** holds the actual formula and runs once per pixel. Bands arrive as
+  `sample.<band>` (`sample.B04`); with `mosaicking` set they become `samples[i].<band>`.
+- **`mosaicking`** — `"SIMPLE"` (the default, one scene), `"ORBIT"` or `"TILE"` — is what makes a
+  script [multi-temporal](https://docs.sentinel-hub.com/api/latest/evalscript/v3/#mosaicking). The
+  string form is the repo convention (69 scripts) over the `Mosaicking.ORBIT` enum (19).
+
+### Outputs
+
+The `default` output is what gets drawn on the map: **3 values (R, G, B) or 4 (R, G, B, alpha)**. With
+`sampleType: "AUTO"` each is 0–1 and is mapped onto 0–255, values outside the range being clamped.
+
+To support the Copernicus Browser **Statistical Analysis** panel, declare extra named outputs. The
+names are exact:
+
+| output id | bands | sampleType | purpose |
+|---|---|---|---|
+| `default` | 3 or 4 | `AUTO` | R, G, B (+ alpha) shown on the map |
+| `index` | 1 | `FLOAT32` | raw value — drives the histogram |
+| `eobrowserStats` | 1 | `FLOAT32` | raw value — drives the time series (`NaN` where masked) |
+| `dataMask` | 1 | | 1 = valid pixel, 0 = no data |
+
+Use **`eobrowserStats`**, not `browserStats`: the CDSE FAQ shows the latter, but all 46 scripts in this
+repository use the former.
+
+### `evaluatePixel` parameters
+
+The full signature is `evaluatePixel(samples, scenes, inputMetadata, customData, outputMetadata)`.
+Most scripts only ever need the first. The rest are
+[documented here](https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Evalscript/Functions.html#parameters):
+
+| parameter | contains | use it for |
+|---|---|---|
+| `samples` | band values — an object under `SIMPLE`, an **array** under `ORBIT`/`TILE` | everything |
+| `scenes` | per-scene metadata: `scenes.tiles[i].cloudCoverage`, `.date`, `scenes.orbits[i].dateFrom` | skipping or weighting cloudy scenes |
+| `inputMetadata` | `serviceVersion`, `normalizationFactor` (`REFLECTANCE = DN × factor`) | converting DN to reflectance |
+| `customData` | reserved for future use | nothing today |
+| `outputMetadata` | write `.userData` to return JSON beside the raster | recording which acquisitions contributed |
+
+### Colour helpers
+
+`new ColorRampVisualizer(ramp)` interpolates between stops; `new ColorMapVisualizer(pairs)` is a
+discrete step lookup with no blending. Both are **classes** — construct once at the top of the script,
+then call `.process(value)` per pixel, which returns a normalized RGB triplet. Colours are hex
+(`0xff0000`) or 0–1 triplets, never 0–255. Stock ramps come from the static factories
+(`ColorRampVisualizer.createBlueRed(min, max)` and friends). Full list of
+[utilities and visualizers](https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Evalscript/Utilities.html).
+
+### Through OGC services (WMS/WCS/WMTS)
+
+If the script will be served through an OGC layer rather than the Processing API,
+[three things change](https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Evalscript/Functions.html#ogc-services-specifics):
+only the `default` output comes back (no extra outputs, no JSON metadata); `TRANSPARENCY` and
+`BGCOLOR` are ignored, so handle transparency with `dataMask`; and the bit depth in `FORMAT` is
+ignored, so `sampleType` decides it.
+
+### Going further
+
+| Topic | Reference |
+|---|---|
+| V3 reference — `setup`, outputs, mosaicking | [docs.sentinel-hub.com](https://docs.sentinel-hub.com/api/latest/evalscript/v3/) |
+| `preProcessScenes` — drop scenes before processing | [Functions](https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Evalscript/Functions.html#preprocessscenes) |
+| `updateOutput` — band count decided at runtime | [Functions](https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Evalscript/Functions.html#updateoutput) |
+| Multi-temporal `for` loop over `samples` (mean NDVI) | [Examples](https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Evalscript/Examples.html#calculating-the-mean-ndvi-value-during-a-given-time-period) |
+
+## 3. Scaffold the files
 
 ### `script.js`
 
@@ -144,7 +230,7 @@ Add to `<collection>/<collection>.md`, under an existing heading, matching the s
 - [<Title>](/<collection>/<slug>) - <one-line description>
 ```
 
-## 3. The examples block and the CDSE lookup
+## 4. The examples block and the CDSE lookup
 
 The website turns the `examples` block into "open in browser" buttons, and the two platforms differ:
 
@@ -169,7 +255,7 @@ Common tokens (always verify against the live `_layouts/script.html`, which is t
 | `landsat-8`   | Landsat 8 / Landsat | `AWS_LOTL1`, `AWS_LOTL2` | `CDAS_L8_L9_LOTL1` |
 | `dem`         | DEM | `DEM_MAPZEN` | `DEM_COPERNICUS_30_CDAS` |
 
-## 4. Validation checklist
+## 5. Validation checklist
 
 - Every evalscript in the folder is a real V3 script — first line `//VERSION=3`, a `setup()` returning
   `{ input, output }`, and an `evaluatePixel()` — and is valid JavaScript. Adding the `//VERSION=3`
@@ -188,7 +274,7 @@ Common tokens (always verify against the live `_layouts/script.html`, which is t
 - The index link line is added under an existing heading.
 - Contributions inherit the repository's **CC BY-SA 4.0** license (credit authors in the index line).
 
-## 5. Evalscript quality checklist
+## 6. Evalscript quality checklist
 
 These keep scripts fast and cheap, especially across many or large requests:
 
@@ -201,11 +287,11 @@ These keep scripts fast and cheap, especially across many or large requests:
 - Use `filterScenes` to drop unneeded scenes from a time range.
 - Reuse `viz.process` / `viz.processList` and predefined products where available; delete unused code.
 
-## 6. Advanced script types
+## 7. Advanced script types
 
-- **Multi-temporal** — set `mosaicking` in `setup` (`SIMPLE` / `ORBIT` / `TILE`);
-  `evaluatePixel(samples, …)` receives `samples` as an array of scenes; use
-  `preProcessScenes` / `filterScenes` to select acquisitions.
+- **Multi-temporal** — set `mosaicking` in `setup` and loop over the `samples` array in
+  `evaluatePixel`; see §2 for both, and use `preProcessScenes` to drop unwanted acquisitions before
+  they cost anything.
 - **Data fusion** — V3 only; `input` becomes a list of `{datasource, bands}`, and you access each source
   via `samples.<id>` (e.g. `samples.S2L2A[0].B04`). Standard datasource ids:
   `S2L1C, S2L2A, S1GRD, S3SLSTR, S3OLCI, S5PL2, L8L1C, DEM, MODIS`. These belong in the
@@ -215,7 +301,7 @@ These keep scripts fast and cheap, especially across many or large requests:
 Further reading: Sentinel Hub's *Multi-temporal processing*, *Custom scripts: faster, cheaper, better*,
 and *Data fusion: combine satellite datasets* articles.
 
-## 7. Submitting a pull request
+## 8. Submitting a pull request
 
 - **One script per pull request** keeps reviews small and independently mergeable.
 - Fork the repository, create a branch (e.g. `add-<slug>`), and commit your `<collection>/<slug>/`
