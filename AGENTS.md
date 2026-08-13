@@ -40,9 +40,9 @@ A folder `<collection>/<slug>/` containing:
 
 …plus **one link line** added to the collection's index page, `<collection>/<collection>.md`.
 
-Copying the [example folder](/contribute/example) is the easiest starting point. If your page should
-offer several evalscript variants (for example a visualization plus a raw-values version), copy
-[example-multiple-scripts](/contribute/example-multiple-scripts) instead and see the `scripts:` field
+Copying the [example folder](/contribute/example) is the easiest starting point. One script with
+several outputs (§2) covers almost every case; only when a folder holds genuinely different products
+does it need [example-multiple-scripts](/contribute/example-multiple-scripts) and the `scripts:` field
 in §3.
 
 ## 1. Gather the inputs
@@ -59,24 +59,38 @@ in §3.
 
 ## 2. Anatomy of an evalscript
 
-Every script has the same shape. Start from this skeleton:
+Every script has the same shape. Start from this skeleton — one file, several outputs, which is the
+form to prefer:
 
 ```javascript
 //VERSION=3
 
 function setup() {
   return {
-    input: ["B04", "B08", "dataMask"],        // only the bands you actually use
-    output: { bands: 4, sampleType: "AUTO" }, // R, G, B, alpha
-    // mosaicking: "ORBIT",                   // multi-temporal scripts only
+    input: ["B04", "B08", "dataMask"],   // only the bands you actually use
+    output: [
+      { id: "default", bands: 4 },                              // R, G, B, alpha
+      { id: "index", bands: 1, sampleType: "FLOAT32" },         // histogram
+      { id: "browserStats", bands: 1, sampleType: "FLOAT32" },  // time series
+      { id: "dataMask", bands: 1 },                             // 1 = valid pixel
+    ],
+    // mosaicking: "ORBIT",              // multi-temporal scripts only
   };
 }
 
 function evaluatePixel(sample) {
   const ndvi = (sample.B08 - sample.B04) / (sample.B08 + sample.B04);
-  return [ndvi, ndvi, ndvi, sample.dataMask];
+  return {
+    default: [ndvi, ndvi, ndvi, sample.dataMask],
+    index: [ndvi],
+    browserStats: [ndvi],
+    dataMask: [sample.dataMask],
+  };
 }
 ```
+
+A visualization-only script can drop everything but `default` and return a plain array instead of an
+object. Everything else stays the same.
 
 - **`setup()`** declares which bands you request and the shape of the result.
 - **`evaluatePixel()`** holds the actual formula and runs once per pixel. Bands arrive as
@@ -87,11 +101,7 @@ function evaluatePixel(sample) {
 
 ### Outputs
 
-The `default` output is what gets drawn on the map: **3 values (R, G, B) or 4 (R, G, B, alpha)**. With
-`sampleType: "AUTO"` each is 0–1 and is mapped onto 0–255, values outside the range being clamped.
-
-To support the Copernicus Browser **Statistical Analysis** panel, declare extra named outputs. The
-names are exact:
+**Prefer one script with several outputs over several script files.** The four names are exact:
 
 | output id | bands | sampleType | purpose |
 |---|---|---|---|
@@ -99,6 +109,11 @@ names are exact:
 | `index` | 1 | `FLOAT32` | raw value — drives the histogram |
 | `browserStats` | 1 | `FLOAT32` | raw value — drives the time series (`NaN` where masked) |
 | `dataMask` | 1 | | 1 = valid pixel, 0 = no data |
+
+`default` is what gets drawn on the map. With the default `sampleType: "AUTO"` its values are 0–1,
+mapped onto 0–255 and clamped outside that range. The other three feed the Copernicus Browser
+**Statistical Analysis** panel — one script then serves the map, the histogram and the time series,
+with no duplicated copy of the formula to keep in sync.
 
 Use **`browserStats`** in new scripts. The older `eobrowserStats` still works and is what the 46
 existing scripts in this repository use — the name dates from EO Browser, which has been discontinued
@@ -178,20 +193,27 @@ examples:
 ---
 ```
 
-**Several scripts on one page.** If the folder holds more than one evalscript, list them with a
-`scripts:` field (added before `examples:`), and the page renders one tab per variant:
+**Several scripts on one page.** Reach for this only when the folder holds genuinely *different
+products* — different source datasets, or different temporal aggregations. Do **not** split a script
+into separate visualization / raw-value / per-browser files: use the multiple outputs in §2 instead,
+so there is one formula to maintain rather than three copies that drift apart. Many older pages carry
+an `eob.js` alongside `script.js` because EO Browser and Copernicus Browser needed different cloud
+masking (s2cloudless vs `SCL`); that is history, not a pattern to copy.
+
+When you do need it, list the files with a `scripts:` field before `examples:`, and the page renders
+one tab per entry:
 
 ```yaml
 scripts:
-  - [Visualization, script.js]
-  - [EO Browser, eob.js]
-  - [Raw Values, raw.js]
+  - [Copernicus DEM, script.js]
+  - [Mapzen DEM, mapzen.js]
 ```
 
 Each entry is `[<label>, <filename>]`, the first tab is the one shown by default, and every file must
-sit in the same folder as the page. Without a `scripts:` field the layout falls back to including a
-file named exactly `script.js`. The "Evaluate and Visualize" links are built separately from
-`evalscripturl` in `examples`, so point that at whichever variant the browser should open. See
+sit in the same folder as the page. The equivalent block form (`- - Copernicus DEM` on its own line)
+is used by many existing pages and is equally valid. Without a `scripts:` field the layout falls back
+to including a file named exactly `script.js`. The "Evaluate and Visualize" links are built separately
+from `evalscripturl` in `examples`, so point that at whichever variant the browser should open. See
 [example-multiple-scripts](/contribute/example-multiple-scripts) for a working page.
 
 Body, in this order:
@@ -242,6 +264,8 @@ file, and take the `parent` / `grand_parent` values from a sibling script in the
   `{ input, output }`, and an `evaluatePixel()` — and is valid JavaScript. Adding the `//VERSION=3`
   line to a V1/V2 script does not satisfy this.
 - The main evalscript is named `script.js`, unless the page lists its files explicitly in `scripts:`.
+- Raw values and statistics come from extra outputs on one script (§2), not from a separate `raw.js`
+  or a per-browser variant.
 - The page file (`README.md` or `index.md`) has `layout: script` and `nav_exclude: true` in its front
   matter.
 - `permalink` is `/<collection>/<slug>/` **and** `evalscripturl` ends with
