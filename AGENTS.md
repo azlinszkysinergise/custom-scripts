@@ -299,9 +299,16 @@ These keep scripts fast and cheap, especially across many or large requests:
   they cost anything.
 - **Data fusion** — V3 only; `input` becomes a list of `{datasource, bands}`, and you access each source
   via `samples.<id>` (e.g. `samples.S2L2A[0].B04`). Standard datasource ids:
-  `S2L1C, S2L2A, S1GRD, S3SLSTR, S3OLCI, S5PL2, L8L1C, DEM, MODIS`. These belong in the
+  `S2L1C, S2L2A, S1GRD, S3SLSTR, S3OLCI, S5PL2, L8L1C, DEM`. These belong in the
   [`data-fusion`](/data-fusion) collection, and the example needs a data-fusion datasource setup rather
   than a single `datasetId`.
+- **Data fusion with BYOC collections** — anything outside that list, most CLMS products included, is
+  served as **BYOC** and needs its Collection ID (a UUID) plus type `BYOC` in the datasource setup; it
+  will not appear in the Copernicus Browser dataset list until you add it. The evalscript itself still
+  refers to the alias you give the source (`samples.MY_ALIAS`), never the UUID. Collection IDs live on
+  each product's own page under
+  [Sentinel Hub data collections](https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Data.html)
+  — the index page carries none, so navigate down to the leaf product page.
 
 ## 8. Submitting a pull request
 
