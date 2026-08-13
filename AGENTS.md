@@ -106,11 +106,12 @@ names are exact:
 |---|---|---|---|
 | `default` | 3 or 4 | `AUTO` | R, G, B (+ alpha) shown on the map |
 | `index` | 1 | `FLOAT32` | raw value — drives the histogram |
-| `eobrowserStats` | 1 | `FLOAT32` | raw value — drives the time series (`NaN` where masked) |
+| `browserStats` | 1 | `FLOAT32` | raw value — drives the time series (`NaN` where masked) |
 | `dataMask` | 1 | | 1 = valid pixel, 0 = no data |
 
-Use **`eobrowserStats`**, not `browserStats`: the CDSE FAQ shows the latter, but all 46 scripts in this
-repository use the former.
+Use **`browserStats`** in new scripts. The older `eobrowserStats` still works and is what the 46
+existing scripts in this repository use — the name dates from EO Browser, which has been discontinued
+in favour of Copernicus Browser. There is no need to go back and rename working scripts.
 
 ### `evaluatePixel` parameters
 
