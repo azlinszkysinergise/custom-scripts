@@ -21,7 +21,6 @@ examples:
   toTime: '2026-08-17T23:59:59.999Z'
   platform:
   - CDSE
-  - EOB
   evalscripturl: https://custom-scripts.sentinel-hub.com/custom-scripts/sentinel-1/enhanced_rgb_ratio/script.js
 - zoom: '8'
   lat: '77.47973'
@@ -55,15 +54,15 @@ co-polarised backscatter to red, the cross-polarised backscatter to green, and t
 The standard composite applies a **linear** stretch to the raw backscatter power. Because backscatter
 spans several orders of magnitude, that linear stretch spends most of the colour range on the brightest
 targets: dense city centres saturate both the red and green channels and **wash out to white**, hiding
-the street pattern and block structure, while vegetation never separates far enough into green. The intended use is visual interpretation of vegetation and urban structure in Sentinel-1 images or mosaics.
+the street pattern and block structure, areas with low reflectivity such as certain types of sea ice are very close to black, while vegetation never separates far enough into green. The intended use is visual interpretation of vegetation and urban structure in Sentinel-1 images or mosaics.
 
 The enhanced script keeps the same channel mapping and the same per-channel scaling, but replaces
-the linear stretch with a **tone-mapping curve** &mdash; the same idea used by the optical
-[tonemapped natural color](/sentinel-2/tonemapped_natural_color) script. An extended **Reinhard** curve
+the linear stretch with a **tone-mapping curve** &mdash; the same idea used by the excellent optical
+[tonemapped natural color](/sentinel-2/tonemapped_natural_color) script. A scaled **Reinhard** curve
 **lifts the mid-range and compresses the highlights**, so bright urban areas keep their internal
 structure instead of clipping to white, while the darker and mid-range surfaces gain contrast. A small
 **saturation** boost makes fuller use of the colour space. The transfer is controlled by six plain
-`var`s at the top of the script, adjustable directly in the Copernicus Browser / EO Browser
+`var`s at the top of the script, adjustable directly in the Copernicus Browser
 custom-script editor:
 
 - **`vvGain` / `vhGain` / `ratGain`** &mdash; per-channel gain for VV (red), VH (green) and the VH/VV
@@ -87,7 +86,7 @@ Three versions are provided via the tabs above:
 
 - **Full** (`script.js`) &mdash; the commented reference implementation, for `VV` + `VH` data.
 - **Compact** (`min.js`) &mdash; the same output, minified with single-letter parameters
-  (`g = [vvGain, vhGain, ratGain]`, `W`, `G`, `S`), small enough to embed in a Copernicus / EO Browser
+  (`g = [vvGain, vhGain, ratGain]`, `W`, `G`, `S`), small enough to embed in a Copernicus Browser
   **share link**.
 - **DH (HH+HV)** (`dh.js`) &mdash; for dual-pol `HH` + `HV` data, which the `VV`/`VH` scripts
   cannot read. See below.
