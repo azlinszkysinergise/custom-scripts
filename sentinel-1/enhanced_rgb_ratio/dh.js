@@ -1,8 +1,9 @@
 //VERSION=3
-// Enhanced RGB ratio visualization for Sentinel-1 DH mosaics (dual-pol HH+HV).
+// Enhanced RGB ratio visualization for dual-pol HH+HV Sentinel-1 data:
+// IW and EW HH+HV acquisitions, and the DH monthly mosaics.
 // R = HH, G = HV, B = HV/HH ratio. A Reinhard tone-mapping curve lifts the
-// mid-range and compresses the highlights, so dense cities keep their internal
-// structure instead of clipping to white and vegetation reads clearly green.
+// mid-range and compresses the highlights, so bright targets keep their
+// internal structure instead of clipping to white.
 // Identical to script.js apart from the polarisation pair: HH replaces VV and
 // HV replaces VH throughout.
 // by András Zlinszky, Copernicus Data Space Ecosystem, @azlinszky.bsky.social

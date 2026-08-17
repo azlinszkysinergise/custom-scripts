@@ -11,7 +11,7 @@ scripts:
 - - Compact
   - min.js
 - - DH (HH+HV)
-  - dh_monthly.js
+  - dh.js
 examples:
 - zoom: '12'
   lat: '48.11076'
@@ -23,6 +23,24 @@ examples:
   - CDSE
   - EOB
   evalscripturl: https://custom-scripts.sentinel-hub.com/custom-scripts/sentinel-1/enhanced_rgb_ratio/script.js
+- zoom: '8'
+  lat: '77.47973'
+  lng: '-84.97925'
+  datasetId: S1_AWS_IW_HHHV
+  fromTime: '2026-08-16T00:00:00.000Z'
+  toTime: '2026-08-16T23:59:59.999Z'
+  platform:
+  - CDSE
+  evalscripturl: https://custom-scripts.sentinel-hub.com/custom-scripts/sentinel-1/enhanced_rgb_ratio/dh.js
+- zoom: '8'
+  lat: '77.47973'
+  lng: '-84.97925'
+  datasetId: S1_MOSAIC_DH
+  fromTime: '2026-06-01T00:00:00.000Z'
+  toTime: '2026-06-01T23:59:59.999Z'
+  platform:
+  - CDSE
+  evalscripturl: https://custom-scripts.sentinel-hub.com/custom-scripts/sentinel-1/enhanced_rgb_ratio/dh.js
 ---
 
 ## General description
@@ -71,7 +89,7 @@ Three versions are provided via the tabs above:
 - **Compact** (`min.js`) &mdash; the same output, minified with single-letter parameters
   (`g = [vvGain, vhGain, ratGain]`, `W`, `G`, `S`), small enough to embed in a Copernicus / EO Browser
   **share link**.
-- **DH (HH+HV)** (`dh_monthly.js`) &mdash; for dual-pol `HH` + `HV` data, which the `VV`/`VH` scripts
+- **DH (HH+HV)** (`dh.js`) &mdash; for dual-pol `HH` + `HV` data, which the `VV`/`VH` scripts
   cannot read. See below.
 
 The script is **per-pixel** (no multi-temporal loop), so it works unchanged on both **standard
@@ -81,11 +99,11 @@ so for those you may want to adjust the gains and white point to recover contras
 
 ### The DH (HH+HV) variant
 
-Sentinel-1 is not dual-pol `VV`+`VH` everywhere. Over the poles and much of the open ocean it acquires
-in **HH+HV** instead, and mosaics built from those acquisitions carry `HH` and `HV` bands. A band name
-in `setup()` is fixed at parse time and cannot be chosen per scene, so `VV`/`VH` and `HH`/`HV` data
-need two separate evalscripts &mdash; hence `dh_monthly.js`, which is otherwise line-for-line the same
-script:
+Sentinel-1 is not dual-pol `VV`+`VH` everywhere. Over the poles, sea ice and much of the open ocean it
+acquires in **HH+HV** instead &mdash; in IW and EW mode alike &mdash; and the **DH monthly mosaics**
+built from those acquisitions carry `HH` and `HV` bands. A band name in `setup()` is fixed at parse
+time and cannot be chosen per scene, so `VV`/`VH` and `HH`/`HV` data need two separate evalscripts.
+`dh.js` is otherwise line-for-line the same script:
 
 - **Red** &rarr; `HH` (co-polarised, as `VV` is in the standard version)
 - **Green** &rarr; `HV` (cross-polarised, as `VH` is)
@@ -108,6 +126,14 @@ saturate regardless of the tone curve.
 ![Enhanced RGB ratio, Munich, Germany](fig/fig1.jpg)
 
 [This scene](https://link.dataspace.copernicus.eu/1vuc) shows the Munich area in Germany. The city itself is shown in various shades of yellow, with bright red or green points highlighting specific double-bounce or triple-bounce effects. Forests (mainly south of the city) are turquoise, while croplands and grasslands are red, orange or purple. Water bodies are blue to black, and large flat surfaces such as airport runways are black to red. You can see Munich Airport in the far north, Augsburg in the northwest, and the Starnberger See and Ammersee in the southwest.
+
+2. Canadian Arctic Archipelago &mdash; the DH variant
+
+The two further "Evaluate and Visualize" links above open `dh.js` over the same Arctic location
+(77.48&deg;N, 84.98&deg;W) on the two kinds of HH+HV data it is meant for: a single **IW HH+HV**
+acquisition, and the **DH monthly mosaic** for June. Comparing the two at the same place shows the
+trade-off described above &mdash; the single acquisition carries full detail with speckle, the mosaic
+is temporally averaged and much smoother.
 
 ## Contributors
 
