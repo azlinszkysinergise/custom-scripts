@@ -10,13 +10,15 @@ scripts:
   - script.js
 - - Compact
   - min.js
+- - DH (HH+HV)
+  - dh_monthly.js
 examples:
-- zoom: '11'
-  lat: '48.15212'
-  lng: '11.68602'
+- zoom: '12'
+  lat: '48.11076'
+  lng: '11.66542'
   datasetId: S1_AWS_IW_VVVH
-  fromTime: '2026-01-01T00:00:00.000Z'
-  toTime: '2026-01-01T23:59:59.999Z'
+  fromTime: '2026-08-17T00:00:00.000Z'
+  toTime: '2026-08-17T23:59:59.999Z'
   platform:
   - CDSE
   - EOB
@@ -63,15 +65,36 @@ gently toward white instead of clipping, keeping detail in both cities and veget
 
 ![Linear vs dB vs Reinhard tone-mapping transfer functions](fig/fig2.png)
 
-Two versions are provided via the tabs above: **Full** (`script.js`, commented) and **Compact**
-(`min.js`, minified with single-letter parameters `g = [vvGain, vhGain, ratGain]`, `W`, `G`, `S`). Both
-produce identical output; the Compact version is small enough to embed in a Copernicus / EO Browser
-**share link**.
+Three versions are provided via the tabs above:
+
+- **Full** (`script.js`) &mdash; the commented reference implementation, for `VV` + `VH` data.
+- **Compact** (`min.js`) &mdash; the same output, minified with single-letter parameters
+  (`g = [vvGain, vhGain, ratGain]`, `W`, `G`, `S`), small enough to embed in a Copernicus / EO Browser
+  **share link**.
+- **DH (HH+HV)** (`dh_monthly.js`) &mdash; for dual-pol `HH` + `HV` data, which the `VV`/`VH` scripts
+  cannot read. See below.
 
 The script is **per-pixel** (no multi-temporal loop), so it works unchanged on both **standard
 Sentinel-1 GRD** acquisitions and the **Sentinel-1 monthly mosaics** &mdash; both provide linear-power
-`VV`, `VH` and `dataMask`. The monthly mosaics are temporally averaged and therefore much less speckled,
+backscatter and `dataMask`. The monthly mosaics are temporally averaged and therefore much less speckled,
 so for those you may want to adjust the gains and white point to recover contrast.
+
+### The DH (HH+HV) variant
+
+Sentinel-1 is not dual-pol `VV`+`VH` everywhere. Over the poles and much of the open ocean it acquires
+in **HH+HV** instead, and mosaics built from those acquisitions carry `HH` and `HV` bands. A band name
+in `setup()` is fixed at parse time and cannot be chosen per scene, so `VV`/`VH` and `HH`/`HV` data
+need two separate evalscripts &mdash; hence `dh_monthly.js`, which is otherwise line-for-line the same
+script:
+
+- **Red** &rarr; `HH` (co-polarised, as `VV` is in the standard version)
+- **Green** &rarr; `HV` (cross-polarised, as `VH` is)
+- **Blue** &rarr; `HV/HH` ratio
+
+The gains, tone curve and saturation carry over unchanged. They are a sensible starting point rather
+than a tuned default: HH and HV backscatter differ from VV and VH over the same surface, and DH data
+mostly covers ice, snow and water rather than the cities and farmland the defaults were set on. Expect
+to raise or lower `hhGain` and `hvGain` for your scene.
 
 Note on very bright red / green points in cities: these are real corner-reflector targets. Bright **red**
 (high VV) is **double-bounce** from building-ground dihedrals; bright **green** (high VH) is cross-pol
